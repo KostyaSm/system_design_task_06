@@ -43,7 +43,6 @@
 Для запуска требуется установленный Docker и Docker Compose.
 
 ```bash
-# Сборка образов и запуск контейнеров (Mongo, Redis, Kafka, API)
 docker-compose up --build -d
 ```
 
@@ -59,7 +58,6 @@ docker-compose up --build -d
 
 **Локальный запуск:**
 ```bash
-# Убедитесь, что Kafka доступна
 ./build/statistics_consumer "localhost:9092"
 ```
 *Consumer будет выводить логи в консоль при получении новых событий.*
@@ -97,11 +95,3 @@ curl -X POST http://localhost:8080/v1/workouts \
 - [Event-Driven Design](./event_driven_design.md) — Подробное описание архитектуры, выбор Kafka, гарантии доставки.
 - [Event Catalog](./event_catalog.md) — Описание всех типов событий, их полей и схем JSON.
 
-## Требования к сдаче
-Проект выполнен в соответствии с заданием:
-- [x] Анализ событий (Events & Commands)
-- [x] Event-Driven архитектура (Producers/Consumers)
-- [x] Брокер сообщений (Kafka, гарантии at-least-once)
-- [x] Паттерн CQRS (Разделение Write/Read моделей)
-- [x] Реализация Producer/Consumer
-- [x] Каталог событий
