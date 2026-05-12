@@ -21,16 +21,16 @@ userver::formats::json::Value CreateWorkout::HandleRequestJson(
             .Append("error", "Request body must be a JSON object")
             .End();
     }
-    
+
     std::string user_id, name, date;
     try {
         user_id = request_json["user_id"].As<std::string>();
         name = request_json["name"].As<std::string>();
-        date = request_json["date"].As<std::string>(); // Формат YYYY-MM-DD ожидается
+        date = request_json["date"].As<std::string>();
     } catch (const userver::formats::json::MissingKeyException& ex) {
         request.SetResponseStatus(userver::server::http::Code::kBadRequest);
         return userver::formats::json::ValueBuilder()
-            .Append("error", fmt::format("Missing required field: {}", ex.key))
+            .Append("error", ex.what())
             .End();
     }
 

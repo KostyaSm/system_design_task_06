@@ -3,15 +3,17 @@
 #include <userver/storages/mongo/collection.hpp>
 #include <userver/storages/mongo/operations.hpp>
 #include <userver/utils/assert.hpp>
+#include <userver/utils/datetime.hpp>
+#include <userver/formats/bson/value_builder.hpp>
 
 #include "kafka/events.hpp"
 #include "kafka/component.hpp"
-#include <fmt/format.h>
 #include <nlohmann/json.hpp>
 
 namespace storage {
 
-using namespace userver::storages::mongo;
+using userver::formats::bson::MakeDoc;
+using userver::formats::bson::MakeArray;
 
 Storage::Storage(ClientPtr mongo_client,
                  std::shared_ptr<kafka::ProducerComponent> kafka_producer)
@@ -62,11 +64,11 @@ std::string Storage::CreateWorkout(const std::string& user_id, const std::string
         auto collection = mongo_client_->GetCollection("workouts");
         auto workout_id = GenerateObjectId();
         auto doc = MakeDoc()
-            .Append("_id", ObjectId{workout_id})
+            .Append("_id", userver::storages::mongo::ObjectId{workout_id})
             .Append("user_id", user_id)
             .Append("name", name)
             .Append("date", date)
-            .Append("exercises", userver::formats::bson::MakeArray())
+            .Append("exercises", MakeArray())
             .Append("created_at", userver::utils::datetime::Now());
             
         auto result = collection.InsertOne(std::move(doc));
@@ -88,7 +90,7 @@ bool Storage::AddExerciseToWorkout(const std::string& workout_id, const std::str
                                    int sets, int reps, double weight_kg) {
     try {
         auto collection = mongo_client_->GetCollection("workouts");
-        auto filter = MakeDoc().Append("_id", ObjectId{workout_id});
+        auto filter = MakeDoc().Append("_id", userver::storages::mongo::ObjectId{workout_id});
         auto exercise_doc = MakeDoc()
             .Append("exercise_id", exercise_id)
             .Append("sets", sets)
@@ -185,7 +187,7 @@ void Storage::InsertUserRecord(const std::string& login, const std::string& pass
 }
 
 std::string Storage::GenerateObjectId() const {
-    return ObjectId{}.ToString();
+    return userver::storages::mongo::ObjectId().ToString();
 }
 
 }

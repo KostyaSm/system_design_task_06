@@ -18,14 +18,11 @@ void process_event(const kafka::Message& msg) {
     std::cout << "  Key:      " << msg.key << std::endl;
     std::cout << "  Payload:  " << msg.payload << std::endl;
 
-    // Простая эмуляция обработки событий для CQRS
     if (msg.payload.find("\"UserRegistered\"") != std::string::npos) {
         std::cout << "  -> [ACTION] Updating user_activity_timeline (CQRS Read Model)" << std::endl;
-        // Здесь будет вызов Storage::UpdateUserTimeline(msg.key, msg.payload);
     } 
     else if (msg.payload.find("\"WorkoutCreated\"") != std::string::npos) {
         std::cout << "  -> [ACTION] Recalculating workout_statistics (CQRS Read Model)" << std::endl;
-        // Здесь будет вызов Storage::RecalculateStats(msg.key, msg.payload);
     }
 }
 

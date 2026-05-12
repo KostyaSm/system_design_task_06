@@ -50,7 +50,7 @@ int main(int argc, char* argv[]) {
     } catch (const std::exception& ex) {
         std::cerr << "Critical error: " << ex.what() << std::endl;
     }
-
+    
     RdKafka::wait_destroyed(5000);
     return 0;
 }
