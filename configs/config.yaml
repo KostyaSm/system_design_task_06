@@ -1,0 +1,91 @@
+server-listener:
+  port: 8080
+  threads: 4
+  log_requests: true
+
+mongo:
+  connection:
+    host: mongo
+    port: 27017
+  connect-timeout: 1s
+  operation-timeout: 5s
+  tls-ca: ""
+  db_name: fitness
+
+redis:
+  connection:
+    host: redis
+    port: 6379
+  connect-timeout: 1s
+  operation-timeout: 1s
+
+storage-component:
+  kafka-brokers: "kafka:9092"
+
+handlers:
+  # Auth
+  handler-auth-register:
+    path: /v1/auth/register
+    method: POST
+    task_processor: main-task-processor
+
+  handler-auth-login:
+    path: /v1/auth/login
+    method: POST
+    task_processor: main-task-processor
+
+  # Users
+  handler-get-user-by-login:
+    path: /v1/users/by-login
+    method: GET
+    task_processor: main-task-processor
+    url_trailing_slash: match
+
+  handler-search-users:
+    path: /v1/users/search
+    method: GET
+    task_processor: main-task-processor
+    url_trailing_slash: match
+
+  # Exercises
+  handler-create-exercise:
+    path: /v1/exercises
+    method: POST
+    task_processor: main-task-processor
+
+  handler-get-exercises:
+    path: /v1/exercises
+    method: GET
+    task_processor: main-task-processor
+    url_trailing_slash: match
+
+  # Workouts
+  handler-create-workout:
+    path: /v1/workouts
+    method: POST
+    task_processor: main-task-processor
+
+  handler-add-exercise-to-workout:
+    path: /v1/workouts/{workout_id}/exercises
+    method: POST
+    task_processor: main-task-processor
+    path_param: workout_id
+
+  handler-get-workout-history:
+    path: /v1/users/{user_id}/workouts
+    method: GET
+    task_processor: main-task-processor
+    path_param: user_id
+
+  handler-get-workout-stats:
+    path: /v1/workouts/stats
+    method: GET
+    task_processor: main-task-processor
+
+components:
+  server:
+    task_processor: main-task-processor
+    default_task_processors:
+      main-task-processor:
+        worker_threads: 4
+        thread_pools: 10

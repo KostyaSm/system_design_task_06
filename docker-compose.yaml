@@ -1,0 +1,131 @@
+version: '3.8'
+
+services:
+  fitness-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fitness-api
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+    environment:
+      - USERVER_MONGO_HOST=mongo
+      - USERVER_REDIS_HOST=redis
+      - USERVER_KAFKA_BROKERS=kafka:9092
+    depends_on:
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - fitness-network
+    restart: unless-stopped
+
+  statistics-consumer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fitness-consumer
+    command: ["./statistics_consumer", "kafka:9092"]
+    environment:
+      - USERVER_KAFKA_BROKERS=kafka:9092
+    depends_on:
+      kafka:
+        condition: service_healthy
+    networks:
+      - fitness-network
+    restart: unless-stopped
+
+  mongo:
+    image: mongo:7
+    container_name: fitness-mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-/data/db
+      - ./mongo/init:/docker-entrypoint-initdb.d
+    environment:
+      - MONGO_INITDB_DATABASE=fitness
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - fitness-network
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: fitness-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - fitness-network
+    restart: unless-stopped
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: fitness-kafka
+    ports:
+      - "9092:9092"
+      - "9093:9093"
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_NUM_PARTITIONS: 3
+      CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
+    volumes:
+      - kafka-/var/lib/kafka/data
+    healthcheck:
+      test: nc -z kafka 9092 || exit -1
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    networks:
+      - fitness-network
+    restart: unless-stopped
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: fitness-kafka-ui
+    ports:
+      - "8090:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: fitness-cluster
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+    depends_on:
+      - kafka
+    networks:
+      - fitness-network
+    restart: unless-stopped
+
+volumes:
+  mongo-
+  redis-data:
+  kafka-
+
+networks:
+  fitness-network:
+    driver: bridge
